@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.minh.ecommerce.inventory.application.GetInventoryService;
 import com.minh.ecommerce.inventory.application.ReserveInventoryService;
 import com.minh.ecommerce.inventory.domain.InsufficientInventoryException;
+import com.minh.ecommerce.inventory.domain.InventoryItem;
 
 import jakarta.validation.Valid;
 
@@ -17,9 +19,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/inventory")
 public class InventoryController {
     private final ReserveInventoryService reserveInventoryService;
+    private final GetInventoryService getInventoryService;
 
-    public InventoryController(ReserveInventoryService reserveInventoryService) {
+    public InventoryController(ReserveInventoryService reserveInventoryService, GetInventoryService getInventoryService) {
         this.reserveInventoryService = reserveInventoryService;
+        this.getInventoryService = getInventoryService;
     }
 
     @PostMapping("/{warehouseId}/{skuId}/reserve")
@@ -30,6 +34,24 @@ public class InventoryController {
         reserveInventoryService.reserve(warehouseId, skuId, request.quantity());
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping ("/{warehouseId}/{skuId}")
+    public ResponseEntity<InventoryResponse> getInventory(
+        @PathVariable String warehouseId,
+        @PathVariable String skuId
+    ) {
+        InventoryItem inventoryItem = getInventoryService.get(warehouseId, skuId);
+        InventoryResponse response = new InventoryResponse(
+            inventoryItem.getWarehouseId(),
+            inventoryItem.getSkuId(),
+            inventoryItem.getOnHand(),
+            inventoryItem.getReserved(),
+            inventoryItem.available()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+    
 
     @GetMapping("/test-error")
     public void testError() {
