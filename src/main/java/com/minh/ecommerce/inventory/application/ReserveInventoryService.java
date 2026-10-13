@@ -9,9 +9,11 @@ import com.minh.ecommerce.inventory.domain.InsufficientInventoryException;
 @Service
 public class ReserveInventoryService {
     private final InventoryRepository inventoryRepository;
+    private final InventoryCache inventoryCache;
 
-    public ReserveInventoryService(InventoryRepository inventoryRepository) {
+    public ReserveInventoryService(InventoryRepository inventoryRepository, InventoryCache inventoryCache) {
         this.inventoryRepository = inventoryRepository;
+        this.inventoryCache = inventoryCache;
     }
 
     @Transactional
@@ -28,5 +30,7 @@ public class ReserveInventoryService {
         if (!reserved) {
             throw new InsufficientInventoryException(warehouseId, skuId, quantity);
         }
+
+        inventoryCache.evict(warehouseId, skuId);
     }
 }
